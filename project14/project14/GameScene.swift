@@ -1,24 +1,26 @@
 //
 //  GameScene.swift
-//  project14
+//  Project14
 //
-//  Created by Anisha Lamichhane on 7/31/20.
-//  Copyright © 2020 Anisha Lamichhane. All rights reserved.
+//  Created by Yury Popov on 04/07/2019.
+//  Copyright © 2019 Yury Popov. All rights reserved.
 //
 
 import SpriteKit
-var slots = [WhackSlot]()
-var popupTime = 0.85
-var numRounds = 0
 
 class GameScene: SKScene {
-    var gameScore: SKLabelNode!
     
+    var gameScore: SKLabelNode!
+    var finalScore: SKLabelNode!
     var score = 0 {
         didSet {
             gameScore.text = "Score: \(score)"
         }
     }
+    
+    var slots = [WhackSlot]()
+    var popupTime = 0.85
+    var numRounds = 0
     
     override func didMove(to view: SKView) {
         let background = SKSpriteNode(imageNamed: "whackBackground")
@@ -27,85 +29,130 @@ class GameScene: SKScene {
         background.zPosition = -1
         addChild(background)
         
-        gameScore = SKLabelNode(fontNamed: "chalkDuster")
-        gameScore.text = "Score:0"
+        gameScore = SKLabelNode(fontNamed: "Chalkduster")
+        gameScore.text = "Score: 0"
         gameScore.position = CGPoint(x: 8, y: 8)
         gameScore.horizontalAlignmentMode = .left
         gameScore.fontSize = 48
         addChild(gameScore)
         
-        for i in 0..<5 { createSlot(at: CGPoint(x: 100 + (i * 170), y: 410))}
-        for i in 0..<4 { createSlot(at: CGPoint(x: 100 + (i * 170), y: 320))}
-        for i in 0..<5 { createSlot(at: CGPoint(x: 100 + (i * 170), y: 230))}
-        for i in 0..<4 { createSlot(at: CGPoint(x: 100 + (i * 170), y: 140))}
+        for i in 0 ..< 5 { createSlot(at: CGPoint(x: 100 + (i * 170), y: 410)) }
+        for i in 0 ..< 4 { createSlot(at: CGPoint(x: 180 + (i * 170), y: 320)) }
+        for i in 0 ..< 5 { createSlot(at: CGPoint(x: 100 + (i * 170), y: 230)) }
+        for i in 0 ..< 4 { createSlot(at: CGPoint(x: 180 + (i * 170), y: 140)) }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             self?.createEnemy()
         }
+        
+        rain()
+        
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
         let tappedNodes = nodes(at: location)
         
+        
+        
         for node in tappedNodes {
             guard let whackSlot = node.parent?.parent as? WhackSlot else { continue }
-            
             if !whackSlot.isVisible { continue }
             if whackSlot.isHit { continue }
             whackSlot.hit()
-            
+           
+                        
             if node.name == "charFriend" {
-//                They shouldn't whack this one
+                // they shouldn't have whacked this penguin
                 score -= 5
-                run(SKAction.playSoundFileNamed("whackBad.caf", waitForCompletion: false))
+                run(SKAction.playSoundFileNamed("whackBad.caf", waitForCompletion:false))
             } else if node.name == "charEnemy" {
-                // Player should whack this one.
+                // they should have whacked this one
                 whackSlot.charNode.xScale = 0.85
                 whackSlot.charNode.yScale = 0.85
                 score += 1
-                run(SKAction.playSoundFileNamed("whack.caf", waitForCompletion: false))
+                smoke(box: whackSlot)
+                run(SKAction.playSoundFileNamed("whack.caf", waitForCompletion:false))
             }
         }
     }
     
-    func createSlot(at position: CGPoint){
+    func createSlot(at position: CGPoint) {
         let slot = WhackSlot()
         slot.configure(at: position)
         addChild(slot)
         slots.append(slot)
-        
     }
     
     func createEnemy() {
         numRounds += 1
+        
         if numRounds >= 30 {
-            for slot in slots{
+            for slot in slots {
                 slot.hide()
             }
+            
             let gameOver = SKSpriteNode(imageNamed: "gameOver")
             gameOver.position = CGPoint(x: 512, y: 384)
             gameOver.zPosition = 1
             addChild(gameOver)
+            showFinalScore()
+            run(SKAction.playSoundFileNamed("gameOver.m4a", waitForCompletion:false))
+            
             return
         }
+        
         popupTime *= 0.991
+        
         slots.shuffle()
         slots[0].show(hideTime: popupTime)
         
-        if Int.random(in: 0...12) > 4{ slots[1].show(hideTime: popupTime)}
-        if Int.random(in: 0...12) > 8{ slots[2].show(hideTime: popupTime)}
-        if Int.random(in: 0...12) > 10{ slots[3].show(hideTime: popupTime)}
-        if Int.random(in: 0...12) > 11{ slots[4].show(hideTime: popupTime)}
+        if Int.random(in: 0...12) > 4 { slots[1].show(hideTime: popupTime) }
+        if Int.random(in: 0...12) > 8 {  slots[2].show(hideTime: popupTime) }
+        if Int.random(in: 0...12) > 10 { slots[3].show(hideTime: popupTime) }
+        if Int.random(in: 0...12) > 11 { slots[4].show(hideTime: popupTime)  }
         
         let minDelay = popupTime / 2.0
-        let maxDelay = popupTime * 2.0
+        let maxDelay = popupTime * 2
         let delay = Double.random(in: minDelay...maxDelay)
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-            [weak self] in
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             self?.createEnemy()
         }
     }
+    
+    func showFinalScore() {
+        finalScore = SKLabelNode(fontNamed: "Chalkduster")
+        finalScore.text = "Final Score: \(score)"
+        finalScore.position = CGPoint(x: 512, y: 470)
+        finalScore.fontColor = UIColor.black
+       
+        finalScore.fontSize = 48
+        addChild(finalScore)
+    }
+    
+    func smoke(box: SKNode) {
+        if let smokeParticles = SKEmitterNode(fileNamed: "SmokeParticles") {
+            smokeParticles.position = box.position
+            smokeParticles.zPosition = 1
+            smokeParticles.position.y += 15
+            addChild(smokeParticles)
+        }
+       
+    }
+    
+    func rain() {
+        if let rainParticle = SKEmitterNode(fileNamed: "RainParticle") {
+            rainParticle.position = CGPoint(x: 1024, y: 768)
+            rainParticle.zPosition = 1
+            rainParticle.position.y += 15
+            addChild(rainParticle)
+        }
+    }
+    
+    
+    
+
 }
