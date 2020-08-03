@@ -13,6 +13,7 @@ var numRounds = 0
 
 class GameScene: SKScene {
     var gameScore: SKLabelNode!
+    var finalScore: SKLabelNode!
     
     var score = 0 {
         didSet {
@@ -89,15 +90,8 @@ class GameScene: SKScene {
             gameOver.position = CGPoint(x: 512, y: 384)
             gameOver.zPosition = 1
             addChild(gameOver)
+            showFinalScore()
             run(SKAction.playSoundFileNamed("gameOver1.m4a", waitForCompletion: false))
-            
-            let ac = UIAlertController(title: "Your final score is : \(score)", message: "It was a good try!!", preferredStyle: .alert)
-             ac.addAction(UIAlertAction(title: "Dismiss", style: .cancel))
-                
-            DispatchQueue.main.async {
-                 self.view?.window?.rootViewController?.present(ac, animated: true, completion: nil)
-             }
-            
             return
         }
         popupTime *= 0.991
@@ -116,5 +110,16 @@ class GameScene: SKScene {
             [weak self] in
             self?.createEnemy()
         }
+    }
+    
+    func showFinalScore() {
+        finalScore = SKLabelNode(fontNamed: "chalkDuster")
+        finalScore.text = "Score:0"
+        finalScore.position = CGPoint(x: 512, y: 450)
+        finalScore.horizontalAlignmentMode = .center
+        finalScore.fontColor = .black
+        finalScore.fontSize = 44
+        finalScore.zPosition = 1
+        addChild(finalScore)
     }
 }
