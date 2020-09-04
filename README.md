@@ -1,5 +1,5 @@
 # Whack-a-Penguin
-This project contains my personal solution to the challenges of project14 of hacking with swift by Paul Hudson.
+This project contains my personal solution to the challenges of project14 hacking with swift by Paul Hudson.
 
 Challenges:
 1. Record your own voice saying "Game over!" and have it play when the game ends.
